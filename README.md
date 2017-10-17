@@ -1,15 +1,25 @@
-# Activerecord::Pg::Multi::Host::Adapter
+# ActiveRecord PostgreSQL Fallback Adapter
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/activerecord/pg/multi/host/adapter`. To experiment with that code, run `bin/console` for an interactive prompt.
+## What is this?
 
-TODO: Delete this and the text above, and describe your gem
+This is an ActiveRecord adapter that extends the out-the-box PostgreSQL adapter supplied with Rails to allow specifying multiple fallback hosts to the database configuration. Connections will be load balanced across these hosts, and any unhealthy hosts will be routed to the remaining healthy hosts via retries.
+
+## When should I use this?
+
+Main article: [some article](http://google.com)
+
+Some use cases for having multiple database connection endpoints:
+
+* Load balancing across multiple connection pooling instances (such as pgbouncer)
+* Improving MTTR (mean time to recovery) by using multiple read-only replicas for parts of the application (such as with [octopus](https://github.com/thiagopradi/octopus))
+* Multi-master setups such as [Postgres-BDR](http://bdr-project.org/docs/stable/)
 
 ## Installation
 
 Add this line to your application's Gemfile:
 
 ```ruby
-gem 'activerecord-pg-multi-host-adapter'
+gem 'activerecord-postgresql-fallback-adapter'
 ```
 
 And then execute:
@@ -18,21 +28,61 @@ And then execute:
 
 Or install it yourself as:
 
-    $ gem install activerecord-pg-multi-host-adapter
+    $ gem install activerecord-postgresql-fallback-adapter
 
 ## Usage
 
-TODO: Write usage instructions here
+This adapter is 100% compatible with the default `activerecord-postgresql-adapter`, and you can simply change the adapter in `config/database.yml`.
+
+To enable the load balancing and fallback features, simply specify multiple hosts using DNS or IP addresses:
+
+### Before
+
+```yaml
+production:
+  adapter: postgresql
+  host: some.single.point.of.failure.com
+```
+
+### After
+
+```yaml
+production:
+  adapter: postgresql_fallback
+  host: 
+    - 'host1.com'
+    - 'host2.com'
+    - '10.1.1.7'
+```
+
+## What about PostgreSQL 10?
+
+PostgreSQL 10.0 introduces [multi host connection strings](http://paquier.xyz/postgresql-2/postgres-10-multi-host-connstr/) which also allows specifying multiple fallback hosts and this is now supported internally by libpq. There are however some caveats:
+
+* You need a bleeding edge PG version
+* Clients need to be compiled with the newer libpq
+* Connections in ActiveRecord remain dead when an upstream host goes offline and this requires forcing a reconnection (eg. via bouncing Unicorn)
+* Does not load balance
+
+## Tested Rails Versions
+
+Unfortunately the bundled database adapters can't be extended without a small amount of duplication, so the implementation is slighly coupled to the Rails version.
+
+The following Rails versions are tested against:
+
+* 4.2.x
+* 5.0.x
+* 5.1.x
 
 ## Development
 
-After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
+After checking out the repo, run `bundle` to install dependencies. Then, run `rake` to run the tests. 
 
-To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and tags, and push the `.gem` file to [rubygems.org](https://rubygems.org).
+To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in the gemspec, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and tags, and push the `.gem` file to [rubygems.org](https://rubygems.org).
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/activerecord-pg-multi-host-adapter.
+Bug reports and pull requests are welcome on GitHub at https://github.com/pascalh1011/activerecord-pg-multi-host-adapter.
 
 ## License
 
