@@ -1,0 +1,3 @@
+adapter: 'postgresql_fallback'
+encoding: utf-8
+database: 'template1'
