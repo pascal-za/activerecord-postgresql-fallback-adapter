@@ -1,5 +1,7 @@
 # ActiveRecord PostgreSQL Fallback Adapter
 
+[![Build Status](https://api.travis-ci.org/pascalh1011/activerecord-postgresql-fallback-adapter.png)](https://travis-ci.org/pascalh1011/activerecord-postgresql-fallback-adapter)
+
 ## What is this?
 
 This is an ActiveRecord adapter that extends the out-the-box PostgreSQL adapter supplied with Rails to allow specifying multiple fallback hosts to the database configuration. Connections will be load balanced across these hosts, and any unhealthy hosts will be routed to the remaining healthy hosts via retries.
